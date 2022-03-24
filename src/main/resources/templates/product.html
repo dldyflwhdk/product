@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품관리</title>
+</head>
+
+<body>
+    <form action="">
+        <input type="hidden" id="pid">
+        <p>상품명<input type="text" id="pname"></p>
+        <p>상품수량<input type="text" id="amount"></p>
+        <p>상품가격<input type="text" id="price"></p>
+    </form>
+
+    <div>
+        <button id="saveBtn">등록</button>
+        <button id="updateBtn">수정</button>
+        <button id="listBtn">목록</button>
+    </div>
+    <div><input type="text" id="findId"><button id="findBtn">조회</button></div>
+    <div><input type="text" id="deleteId"><button id="deleteBtn">삭제</button></div>
+
+    <div>댓글목록</div>
+    <div id="list"></div>
+
+    <script>
+
+        /*버튼 연결*/
+        saveBtn.addEventListener('click', save_f);
+        listBtn.addEventListener('click', list_f);
+        findBtn.addEventListener('click', find_f);
+        updateBtn.addEventListener('click', update_f);
+        deleteBtn.addEventListener('click', delete_f);
+
+
+
+        /*등록*/
+        function save_f(e) {
+            const url = `/api/product`;
+            const data = {};
+            data.pname = pname.value;
+            data.amount = amount.value;
+            data.price = price.value;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data) //js 객체=> json포맷 문자열 변환
+            }).then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    list_f();
+                }).catch(err => console.error('Err:', err));
+
+            console.log('등록');
+        }
+
+        /*전체목록*/
+        function list_f(e) {
+            fetch('/api/product', {
+                method: 'GET'
+            }).then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    displayList(res);
+                }).catch(err => { console.error('Err:', err) });
+            
+            console.log('전체목록');
+        }
+
+        function displayList(res) {
+            let html = '';
+
+            if (res.rtcd === '00') {  //목록이 있는 경우
+                res.data.forEach(product => {
+                    html += `<p>`;
+                    html += `상품번호:${product.pid}, 상품명:${product.pname}`;
+                    html += `상품수량:${product.amount}, 상품가격:${product.price}`;
+                    html += `</p>`;
+                });
+            } else if (res.rtcd === '02') { //목록이 없는 경우
+                html = '';
+            } else {
+                alert(res.rtmsg);
+            }
+            list.innerHTML = html;
+
+            console.log('출력');
+        }
+
+        /*조회*/
+        function find_f(e) {
+            console.log(findId.value);
+            const url = `/api/product/${findId.value}`;
+
+            fetch(url, {
+                method: 'GET'
+            }).then(res => res.json())
+                .then(res => {
+                if(res.rtcd == '00'){
+                    console.log(res.data);
+                    pid.value = res.data.pid;
+                    pname.value = res.data.pname;
+                    amount.value = res.data.amount;
+                    price.value = res.data.price;
+
+                    }else{
+                        console.log(res.rtmsg);
+                    }
+                }).catch(err => console.error('Err:', err));
+            console.log('개별조회');
+        }
+
+        /*수정*/
+        function update_f(e) {
+            const data = {};
+            const id = document.querySelector('#pid').value;
+            alert("잠시");
+            data.pname = pname.value;
+            data.amount = amount.value;
+            data.price = price.value;
+            const url = `/api/product/${id}`;
+            fetch(url, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    list_f();
+                }).catch(err => console.error('Err:', err));
+            console.log('수정');
+        }
+        
+        /*삭제*/
+        function delete_f(e) {
+            console.log(deleteId.value);
+            const url = `/api/product/${deleteId.value}`;
+            fetch(url, {
+                method: 'DELETE'
+            }).then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    list_f();
+                }).catch(err => { console.error('Err:', err) });
+                console.log('삭제');
+        }
+    </script>
+</body>
+</html>
